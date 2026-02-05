@@ -1,0 +1,19 @@
+#!/bin/bash
+# GPD Pocket 4 auto screen rotation using iio-sensor-proxy
+
+monitor-sensor | while read -r line; do
+    case "$line" in
+        *"normal"*)
+            xrandr --output eDP-1 --rotate normal
+            ;;
+        *"left-up"*)
+            xrandr --output eDP-1 --rotate left
+            ;;
+        *"right-up"*)
+            xrandr --output eDP-1 --rotate right
+            ;;
+        *"bottom-up"*)
+            xrandr --output eDP-1 --rotate inverted
+            ;;
+    esac
+done

@@ -1,0 +1,14 @@
+[Unit]
+Description=GPD Pocket 4 automatic screen rotation
+After=iio-sensor-proxy.service
+Requires=iio-sensor-proxy.service
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/gpd-pocket4-autorotate
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

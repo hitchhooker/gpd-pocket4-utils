@@ -1,0 +1,72 @@
+#!/bin/bash
+# GPD Pocket 4 smooth fan control with temperature averaging
+
+# Find hwmon paths dynamically
+for hwmon in /sys/class/hwmon/hwmon*/; do
+    name=$(cat "${hwmon}name" 2>/dev/null)
+    case "$name" in
+        gpdfan) FAN_HWMON="$hwmon" ;;
+        k10temp) TEMP_HWMON="$hwmon" ;;
+    esac
+done
+
+if [[ -z "$FAN_HWMON" ]] || [[ -z "$TEMP_HWMON" ]]; then
+    echo "Error: Could not find gpdfan or k10temp hwmon devices" >&2
+    exit 1
+fi
+
+INTERVAL=2
+SAMPLES=5  # Average over 10 seconds
+
+# Fan curve: temp(C) -> PWM(0-255)
+get_pwm() {
+    local temp=$1
+    if   (( temp < 50 )); then echo 0
+    elif (( temp < 60 )); then echo 80
+    elif (( temp < 70 )); then echo 120
+    elif (( temp < 80 )); then echo 180
+    elif (( temp < 90 )); then echo 220
+    else echo 255
+    fi
+}
+
+# Enable manual control
+echo 1 > "${FAN_HWMON}pwm1_enable"
+
+declare -a temps
+idx=0
+current_pwm=0
+
+cleanup() {
+    echo 2 > "${FAN_HWMON}pwm1_enable"  # Restore auto mode
+    exit 0
+}
+trap cleanup SIGTERM SIGINT
+
+while true; do
+    temp_raw=$(cat "${TEMP_HWMON}temp1_input" 2>/dev/null)
+    temp=$((temp_raw / 1000))
+
+    temps[$idx]=$temp
+    idx=$(( (idx + 1) % SAMPLES ))
+
+    sum=0; count=0
+    for t in "${temps[@]}"; do
+        [[ -n "$t" ]] && { sum=$((sum + t)); count=$((count + 1)); }
+    done
+    avg_temp=$((sum / count))
+
+    target_pwm=$(get_pwm $avg_temp)
+
+    # Gradual ramp: faster up, slower down
+    if (( target_pwm > current_pwm )); then
+        step=$(( (target_pwm - current_pwm) > 25 ? 25 : (target_pwm - current_pwm) ))
+        current_pwm=$((current_pwm + step))
+    elif (( target_pwm < current_pwm )); then
+        step=$(( (current_pwm - target_pwm) > 10 ? 10 : (current_pwm - target_pwm) ))
+        current_pwm=$((current_pwm - step))
+    fi
+
+    echo "$current_pwm" > "${FAN_HWMON}pwm1"
+    sleep $INTERVAL
+done

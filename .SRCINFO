@@ -1,0 +1,23 @@
+pkgbase = gpd-pocket4-utils
+	pkgdesc = Utilities for GPD Pocket 4: auto screen rotation (X11) and smooth fan control
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://github.com/example/gpd-pocket4-utils
+	install = gpd-pocket4-utils.install
+	arch = any
+	license = MIT
+	depends = bash
+	depends = iio-sensor-proxy
+	depends = xorg-xrandr
+	depends = lm_sensors
+	optdepends = gpd-fan-driver: kernel module for fan control
+	source = autorotate
+	source = smoothfan
+	source = gpd-pocket4-autorotate.service
+	source = gpd-pocket4-fancontrol.service
+	sha256sums = 2b920d435ddd0757ade06eabc1f1f90cfa324ecfe1556d6a05fe1122fbefcf33
+	sha256sums = e3f0d5c028d8c2fbe4f53dff24ca9dadbbe16861fcb22732ccbbe9888dce643d
+	sha256sums = 481f936529866fc95c037ee97b233e511e4ae6b8448664daa1a34da56d8fceb1
+	sha256sums = c0ba0dca56f214e7162bc0bc7af15f402e31c55c975e7e5b4fca853d3620f182
+
+pkgname = gpd-pocket4-utils

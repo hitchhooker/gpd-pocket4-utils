@@ -1,0 +1,13 @@
+[Unit]
+Description=GPD Pocket 4 smooth fan control
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/gpd-pocket4-fancontrol
+ExecStopPost=/bin/bash -c 'for h in /sys/class/hwmon/hwmon*/; do [[ "$(cat ${h}name 2>/dev/null)" == "gpdfan" ]] && echo 2 > ${h}pwm1_enable; done'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
