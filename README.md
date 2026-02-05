@@ -6,7 +6,8 @@ Utilities for GPD Pocket 4 on Arch Linux: automatic screen rotation and smooth f
 
 ## Features
 
-- **Auto Screen Rotation** - Automatically rotates display based on device orientation using the built-in accelerometer
+- **Auto Screen Rotation** - Automatically rotates display and touchscreen based on device orientation using the built-in accelerometer
+- **Touchscreen Calibration** - Automatically adjusts touchscreen matrix when rotation changes (no more inverted touch input!)
 - **Smooth Fan Control** - Temperature-averaged fan curve to prevent fan noise spikes during brief CPU bursts
 
 ## Requirements

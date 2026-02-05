@@ -1,19 +1,45 @@
 #!/bin/bash
 # GPD Pocket 4 auto screen rotation using iio-sensor-proxy
+# Handles both screen and touchscreen rotation
+
+export DISPLAY="${DISPLAY:-:0}"
+
+# Find touchscreen device (GPD Pocket 4 uses NVTK touchscreen)
+get_touchscreen_id() {
+    xinput list --id-only "NVTK0603:00 0603:F001" 2>/dev/null
+}
+
+# Set touchscreen calibration matrix for rotation
+set_touch_matrix() {
+    local touch_id
+    touch_id=$(get_touchscreen_id)
+    [ -z "$touch_id" ] && return
+
+    case "$1" in
+        normal)   xinput set-prop "$touch_id" "libinput Calibration Matrix" 1 0 0 0 1 0 0 0 1 ;;
+        left)     xinput set-prop "$touch_id" "libinput Calibration Matrix" 0 -1 1 1 0 0 0 0 1 ;;
+        right)    xinput set-prop "$touch_id" "libinput Calibration Matrix" 0 1 0 -1 0 1 0 0 1 ;;
+        inverted) xinput set-prop "$touch_id" "libinput Calibration Matrix" -1 0 1 0 -1 1 0 0 1 ;;
+    esac
+}
 
 monitor-sensor | while read -r line; do
     case "$line" in
         *"normal"*)
             xrandr --output eDP-1 --rotate normal
+            set_touch_matrix normal
             ;;
         *"left-up"*)
             xrandr --output eDP-1 --rotate left
+            set_touch_matrix left
             ;;
         *"right-up"*)
             xrandr --output eDP-1 --rotate right
+            set_touch_matrix right
             ;;
         *"bottom-up"*)
             xrandr --output eDP-1 --rotate inverted
+            set_touch_matrix inverted
             ;;
     esac
 done

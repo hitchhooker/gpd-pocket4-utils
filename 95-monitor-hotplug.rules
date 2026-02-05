@@ -1,0 +1,3 @@
+# GPD Pocket 4 monitor hotplug handler
+# Triggers desktop migration when external monitor is connected/disconnected
+ACTION=="change", SUBSYSTEM=="drm", RUN+="/usr/bin/gpd-pocket4-monitor-hotplug"

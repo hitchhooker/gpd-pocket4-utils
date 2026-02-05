@@ -1,0 +1,63 @@
+#!/bin/bash
+# BSPWM monitor hotplug handler for GPD Pocket 4
+# Handles external monitor connect/disconnect and migrates desktops
+
+export DISPLAY="${DISPLAY:-:0}"
+
+# Primary (internal) monitor
+internal="eDP-1"
+
+# Force xrandr to detect current state
+xrandr --auto
+sleep 0.3
+
+# Find touchscreen and set calibration for right rotation
+set_touch_matrix() {
+    local touch_id
+    touch_id=$(xinput list --id-only "NVTK0603:00 0603:F001" 2>/dev/null)
+    [ -z "$touch_id" ] && return
+    xinput set-prop "$touch_id" "libinput Calibration Matrix" 0 1 0 -1 0 1 0 0 1
+}
+
+# Get connected external monitors
+external=$(xrandr | grep " connected" | grep -v "$internal" | awk '{print $1}')
+
+if [ -n "$external" ]; then
+    # External monitor connected - set up dual monitor
+    xrandr --output "$internal" --rotate right --primary \
+           --output "$external" --auto --left-of "$internal" --rotate normal
+    sleep 0.5
+    set_touch_matrix
+
+    # Check if bspwm is running
+    if command -v bspc &>/dev/null && bspc query -M &>/dev/null; then
+        bspc monitor "$internal" -d 1 2 3 4 5 6 7 8
+        bspc monitor "$external" -d 9 10
+    fi
+else
+    # Single monitor - migrate all desktops from other monitors first
+    if command -v bspc &>/dev/null && bspc query -M &>/dev/null; then
+        for mon in $(bspc query -M --names | grep -v "$internal"); do
+            # Move all desktops from disconnected monitor to internal
+            for desktop in $(bspc query -D -m "$mon" 2>/dev/null); do
+                bspc desktop "$desktop" --to-monitor "$internal" 2>/dev/null
+            done
+            # Remove the phantom monitor
+            bspc monitor "$mon" -r 2>/dev/null
+        done
+    fi
+
+    xrandr --output HDMI-1 --off 2>/dev/null
+    sleep 0.3
+    set_touch_matrix
+
+    # Reset desktops on internal monitor
+    if command -v bspc &>/dev/null && bspc query -M &>/dev/null; then
+        bspc monitor "$internal" -d 1 2 3 4 5 6 7 8 9 10
+    fi
+fi
+
+# Relaunch polybar if installed
+if [ -x ~/.config/polybar/launch.sh ]; then
+    ~/.config/polybar/launch.sh &
+fi
