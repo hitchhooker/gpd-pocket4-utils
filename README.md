@@ -9,6 +9,10 @@ Utilities for GPD Pocket 4 on Arch Linux: automatic screen rotation and smooth f
 - **Auto Screen Rotation** - Automatically rotates display and touchscreen based on device orientation using the built-in accelerometer
 - **Touchscreen Calibration** - Automatically adjusts touchscreen matrix when rotation changes (no more inverted touch input!)
 - **Smooth Fan Control** - Temperature-averaged fan curve to prevent fan noise spikes during brief CPU bursts
+- **Monitor Hotplug** - Automatic desktop migration when external monitors are connected/disconnected (bspwm)
+- **Trackpoint Scrolling** - Button scrolling (hold middle button + move = scroll) with acceleration
+- **AMD GPU TearFree** - Eliminates screen tearing with DRI3
+- **Audio Fix** - ALSA config for proper audio driver selection
 
 ## Requirements
 
@@ -149,6 +153,47 @@ The transformation matrix rotates touch input to match screen rotation:
 | left     | `0 -1 1 1 0 0 0 0 1`      |
 | right    | `0 1 0 -1 0 1 0 0 1`      |
 | inverted | `-1 0 1 0 -1 1 0 0 1`     |
+
+## Included Configs
+
+The package installs these configuration files:
+
+### Audio (`/etc/modprobe.d/alsa-gpd-pocket4.conf`)
+
+Forces the correct ALSA driver for GPD Pocket 4:
+```
+options snd-intel-dspcfg dsp_driver=1
+```
+
+### AMD GPU (`/etc/X11/xorg.conf.d/20-gpd-pocket4-amdgpu.conf`)
+
+Enables TearFree and DRI3 for smooth graphics:
+```
+Section "Device"
+  Identifier "Device0"
+  Driver     "amdgpu"
+  Option     "TearFree"    "on"
+  Option     "DRI"         "3"
+EndSection
+```
+
+### Trackpoint (`/etc/X11/xorg.conf.d/80-gpd-pocket4-trackpoint.conf`)
+
+Configures the optical trackpoint with button scrolling:
+```
+Section "InputClass"
+  Identifier     "GPD Pocket 4 touchpad"
+  MatchProduct   "HAILUCK CO.,LTD USB KEYBOARD Mouse"
+  MatchIsPointer "on"
+  Driver         "libinput"
+  Option         "AccelSpeed"      "1"
+  Option         "MiddleEmulation" "1"
+  Option         "ScrollButton"    "2"
+  Option         "ScrollMethod"    "button"
+EndSection
+```
+
+**Usage:** Hold middle mouse button (or both left+right together) and move trackpoint to scroll.
 
 ## Troubleshooting
 
